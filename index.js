@@ -11,41 +11,74 @@ let users = [];
 io.on('connection', (socket) => {
   console.log('User connected');
 
-  socket.on('join-room', (username, roomCode) => {
+  socket.on('start-game', (roomCode) => {
+    console.log("Starting Room: " + roomCode);
+    rooms[roomCode].gameState = 'started';
+    io.to(roomCode).emit('starting-game', rooms[roomCode].gameState)
+
+  });
+
+  socket.on('end-game', (roomCode) => {
+    console.log("Ending Room: " + roomCode);
+    io.to(roomCode).emit('ending-game');
+    rooms[roomCode].gameState = null;
+
+    io.to(roomCode).emit('ending-game')
+
+  });
+
+  socket.on('send-message', (roomCode, messageContent, sender) => {
+    const message ={
+      messageContent: messageContent,
+      sender: sender,
+    }
+    console.log("Received Message: " + messageContent);
+    console.log("From: " + sender);
+    rooms[roomCode].messages.push(message)
+
+    io.to(roomCode).emit('message-update', rooms[roomCode].messages)
+    
+  });
+
+  socket.on('join-room', (userName, roomCode) => {
     const user ={
-      username, 
+      userName, 
       id: socket.id,
     }
     
     users.push(user);
     socket.join(roomCode)
 
-    io.to(roomCode).emit('user-joined', user);
-
     rooms[roomCode].users += 1;
-    rooms[roomCode].userList.push(user.username);
+    rooms[roomCode].userList.push(user);
 
-    printConsoleLogs(username, socket.id, roomCode);
+    io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState)
+
+
+
+    printConsoleLogs(userName, socket.id, roomCode);
   });
 
-  socket.on('create-room', async (username) => {
+  socket.on('create-room', async (userName) => {
     const user ={
-      username, 
+      userName, 
       id: socket.id,
     }
     users.push(user);
-    io.to(roomCode).emit('user-joined', user);
     const roomCode = await generateRoomCode();
-    rooms[roomCode] = { users: 1, createdAt: Date.now(), userList: [] };
+    rooms[roomCode] = { users: 1, createdAt: Date.now(), userList: [], gameState: 'lobby', messages: []};
     socket.join(roomCode);
-    rooms[roomCode].userList.push(user.username);
+    rooms[roomCode].userList.push(user);
+    
+    io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState)
 
-    printConsoleLogs(username, socket.id, roomCode);
+
+    printConsoleLogs(userName, socket.id, roomCode);
   });
 }); 
 
-function printConsoleLogs(username, socketID, roomCode){
-  console.log("User: " + username);
+function printConsoleLogs(userName, socketID, roomCode){
+  console.log("User: " + userName);
   console.log("SocketID: " + socketID);
   console.log("Roomcode: " + roomCode);
 
