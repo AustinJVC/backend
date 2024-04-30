@@ -1,15 +1,10 @@
 const express = require('express');
 const app = express();
-const https = require('https');
-const fs = require('fs');
-const io = require('socket.io')(https, {
-  cors: {origin: "*"}
+const http = require('http'); // Use http instead of https
+const io = require('socket.io')(http, {
+  cors: { origin: "*" }
 });
 
-const options = {
-  cert: fs.readFileSync('./security/cert.pem'),
-  key: fs.readFileSync('./security/key.pem')
-};
 
 let rooms = [];
 let users = [];
@@ -99,8 +94,8 @@ async function generateRoomCode() {
   return data[0].toString();
 }
 
-const server = https.createServer(options, app);
+const server = http.createServer(app);
 
-server.listen(3000, () => {
-  console.log('Server listening on port 3000');
+server.listen(process.env.PORT || 3000, () => {
+  console.log('Server listening on port', process.env.PORT || 3000);
 });
