@@ -8,7 +8,7 @@ const io = require('socket.io')(http, {
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://whispers.austinvc.ca'); // Replace with your frontend origin
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow OPTIONS method
   next();
 });
 
