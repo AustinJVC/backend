@@ -1,0 +1,7 @@
+runtime: nodejs20 
+
+env: standard  
+
+handlers:
+- url: /.*  
+  script: index.js
