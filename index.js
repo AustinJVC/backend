@@ -1,10 +1,15 @@
 const express = require('express');
 const app = express();
-const http = require('http').createServer(app);
-
-const io = require('socket.io')(http, {
+const https = require('https');
+const fs = require('fs');
+const io = require('socket.io')(https, {
   cors: {origin: "*"}
 });
+
+const options = {
+  cert: fs.readFileSync('./security/cert.pem'),
+  key: fs.readFileSync('./security/key.pem')
+};
 
 let rooms = [];
 let users = [];
@@ -93,7 +98,9 @@ async function generateRoomCode() {
   const data = await response.json();  // Await and store the parsed JSON data
   return data[0].toString();
 }
-// Start the server
-http.listen(3000, () => {
+
+const server = https.createServer(options, app);
+
+server.listen(3000, () => {
   console.log('Server listening on port 3000');
 });
