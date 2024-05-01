@@ -5,9 +5,10 @@ const https = require('https');
 var cors = require('cors') 
 const io = require('socket.io')(https, {
   handlePreflightRequest: (req, res) => {
+    console.log("Entered Preflight Request")
     const headers = {
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Origin": req.headers.origin, // Allow origin from request headers
+      "Access-Control-Allow-Origin": req.headers.origin, 
       "Access-Control-Allow-Credentials": true
     };
     res.writeHead(200, headers);
@@ -106,5 +107,5 @@ async function generateRoomCode() {
 const server = https.createServer(app);
 
 server.listen(PORT, () => {
-  console.log(`server started on port ${PORT} (HTTPS)`);
+  console.log(`server listening on port ${PORT} (HTTPS) good luck austin :)))))))))`);
 });
