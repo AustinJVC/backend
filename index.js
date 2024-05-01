@@ -2,20 +2,18 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const https = require('https');
-var cors = require('cors')
+var cors = require('cors') 
 const io = require('socket.io')(https, {
-  cors: { origin: "*" }
+  handlePreflightRequest: (req, res) => {
+    const headers = {
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Origin": req.headers.origin, // Allow origin from request headers
+      "Access-Control-Allow-Credentials": true
+    };
+    res.writeHead(200, headers);
+    res.end();
+  }
 });
-
-app.use(cors());
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*'); 
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  next();
-});
-
 
 let rooms = [];
 let users = [];
