@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
-const http = require('http'); 
-const io = require('socket.io')(http, {
+const PORT = process.env.PORT || 3000;
+const https = require('https');
+const io = require('socket.io')(https, {
   cors: { origin: "*" }
 });
 
@@ -101,8 +102,8 @@ async function generateRoomCode() {
   return data[0].toString();
 }
 
-const server = http.createServer(app);
+const server = https.createServer(app);
 
-server.listen(process.env.PORT || 3000, () => {
-  console.log('Server listening on port', process.env.PORT || 3000);
+server.listen(PORT, () => {
+  console.log(`server started on port ${PORT} (HTTPS)`);
 });
