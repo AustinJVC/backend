@@ -2,9 +2,12 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const https = require('https');
+var cors = require('cors')
 const io = require('socket.io')(https, {
   cors: { origin: "*" }
 });
+
+app.user(cors());
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://whispers.austinvc.ca'); // Replace with your frontend origin
