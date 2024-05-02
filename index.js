@@ -54,11 +54,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join-room', (userName, roomCode) => {
-    if (rooms[roomCode] && roomCodeRegex.test(roomCode)) {
+    if (rooms[roomCode] && roomCodeRegex.test(roomCode) && usernameRegex.test(userName)) {
       
       const existingUser = rooms[roomCode].userList.find(user => user.userName === userName);
   
-      if (existingUser && !usernameRegex.test(userName)) {
+      if (existingUser) {
         io.emit('error', { message: 'Failed to join room: Username already in use' });
         console.error(`User ${userName} already joined room ${roomCode}`);
       } else {
@@ -75,8 +75,8 @@ io.on('connection', (socket) => {
         printConsoleLogs(userName, socket.id, roomCode);
       }
     } else {
-      io.emit('error', { message: 'Failed to join room: Invalid room code' });
-      console.error("Failed to join room: Invalid room code");
+      io.emit('error', { message: 'Failed to join room: Invalid room code or username' });
+      console.error("Failed to join room: Invalid room code or username");
     }
   });
 
