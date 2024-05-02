@@ -90,7 +90,7 @@ function printConsoleLogs(userName, socketID, roomCode){
 async function generateRoomCode() {
   const response = await fetch("https://random-word-api.herokuapp.com/word?length=6");
   const data = await response.json(); 
-  return data[0].toString();
+  return data[0].toString().toUpperCase();
 }
 // Start the server
 http.listen(3000, () => {
