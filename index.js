@@ -7,6 +7,8 @@ const io = require('socket.io')(http, {
 
 let rooms = [];
 let users = [];
+const usernameRegex = /^[a-zA-Z0-9]{1,20}$/;
+const roomCodeRegex = /^[a-zA-Z]{6}$/;
 
 io.on('connection', (socket) => {
   console.log('User connected');
@@ -17,6 +19,7 @@ io.on('connection', (socket) => {
       rooms[roomCode].gameState = 'started';
       io.to(roomCode).emit('starting-game', rooms[roomCode].gameState);
     } else {
+      io.emit('error', { message: 'Failed to start game: Invalid room or already started' });
       console.error("Failed to start game: Invalid room or already started");
     }
   });
@@ -28,6 +31,7 @@ io.on('connection', (socket) => {
       rooms[roomCode].gameState = null;
       io.to(roomCode).emit('ending-game');
     } else {
+      io.emit('error', { message: 'Failed to end game: Invalid room' });
       console.error("Failed to end game: Invalid room");
     }
 
@@ -44,37 +48,55 @@ io.on('connection', (socket) => {
       rooms[roomCode].messages.push(message);
       io.to(roomCode).emit('message-update', rooms[roomCode].messages);
     } else {
+      io.emit('error', { message: 'Failed to send message: Invalid room' });
       console.error("Failed to send message: Invalid room");
     }
   });
 
   socket.on('join-room', (userName, roomCode) => {
-    if (rooms[roomCode]) {
-      const user = {
-        userName,
-        id: socket.id,
-      };
-      users.push(user);
-      socket.join(roomCode);
-      rooms[roomCode].users++;
-      rooms[roomCode].userList.push(user);
-      io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
-      printConsoleLogs(userName, socket.id, roomCode);
+    if (rooms[roomCode] && roomCodeRegex.test(roomCode)) {
+      
+      const existingUser = rooms[roomCode].userList.find(user => user.userName === userName);
+  
+      if (existingUser && usernameRegex.test(userName)) {
+        io.emit('error', { message: 'Failed to join room: Username already in use' });
+        console.error(`User ${userName} already joined room ${roomCode}`);
+      } else {
+        
+        const user = {
+          userName,
+          id: socket.id,
+        };
+        users.push(user);
+        socket.join(roomCode);
+        rooms[roomCode].users++;
+        rooms[roomCode].userList.push(user);
+        io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
+        printConsoleLogs(userName, socket.id, roomCode);
+      }
     } else {
+      io.emit('error', { message: 'Failed to join room: Invalid room code' });
       console.error("Failed to join room: Invalid room code");
     }
   });
 
   socket.on('create-room', async (userName) => {
+    
+    if (!usernameRegex.test(userName)) {
+      io.emit('error', { message: 'Failed to create room: Invalid username.' });
+      console.error(`Invalid username format: ${userName}`);
+      return; 
+    }
+
+    
     const user = {
       userName,
       id: socket.id,
     };
 
-    // Check for existing room code before creating
     const roomCode = await generateRoomCode();
     while (rooms[roomCode]) {
-      roomCode = await generateRoomCode(); // Keep generating until unique code found
+      roomCode = await generateRoomCode();
     }
 
     rooms[roomCode] = { users: 1, createdAt: Date.now(), userList: [], gameState: 'lobby', messages: [] };
