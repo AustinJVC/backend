@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
       
       const existingUser = rooms[roomCode].userList.find(user => user.userName === userName);
   
-      if (existingUser && usernameRegex.test(userName)) {
+      if (existingUser && !usernameRegex.test(userName)) {
         io.emit('error', { message: 'Failed to join room: Username already in use' });
         console.error(`User ${userName} already joined room ${roomCode}`);
       } else {
