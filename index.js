@@ -13,66 +13,75 @@ io.on('connection', (socket) => {
 
   socket.on('start-game', (roomCode) => {
     console.log("Starting Room: " + roomCode);
-    rooms[roomCode].gameState = 'started';
-    io.to(roomCode).emit('starting-game', rooms[roomCode].gameState)
-
+    if (rooms[roomCode] && rooms[roomCode].gameState !== 'started') {
+      rooms[roomCode].gameState = 'started';
+      io.to(roomCode).emit('starting-game', rooms[roomCode].gameState);
+    } else {
+      console.error("Failed to start game: Invalid room or already started");
+    }
   });
 
   socket.on('end-game', (roomCode) => {
     console.log("Ending Room: " + roomCode);
-    io.to(roomCode).emit('ending-game');
-    rooms[roomCode].gameState = null;
-
-    io.to(roomCode).emit('ending-game')
+    if (rooms[roomCode]) {
+      io.to(roomCode).emit('ending-game');
+      rooms[roomCode].gameState = null;
+      io.to(roomCode).emit('ending-game');
+    } else {
+      console.error("Failed to end game: Invalid room");
+    }
 
   });
 
   socket.on('send-message', (roomCode, messageContent, sender) => {
-    const message ={
-      messageContent: messageContent,
-      sender: sender,
+    if (rooms[roomCode]) {
+      const message = {
+        messageContent,
+        sender,
+      };
+      console.log("Received Message: " + messageContent);
+      console.log("From: " + sender);
+      rooms[roomCode].messages.push(message);
+      io.to(roomCode).emit('message-update', rooms[roomCode].messages);
+    } else {
+      console.error("Failed to send message: Invalid room");
     }
-    console.log("Received Message: " + messageContent);
-    console.log("From: " + sender);
-    rooms[roomCode].messages.push(message)
-
-    io.to(roomCode).emit('message-update', rooms[roomCode].messages)
-    
   });
 
   socket.on('join-room', (userName, roomCode) => {
-    const user ={
-      userName, 
-      id: socket.id,
+    if (rooms[roomCode]) {
+      const user = {
+        userName,
+        id: socket.id,
+      };
+      users.push(user);
+      socket.join(roomCode);
+      rooms[roomCode].users++;
+      rooms[roomCode].userList.push(user);
+      io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
+      printConsoleLogs(userName, socket.id, roomCode);
+    } else {
+      console.error("Failed to join room: Invalid room code");
     }
-    
-    users.push(user);
-    socket.join(roomCode)
-
-    rooms[roomCode].users += 1;
-    rooms[roomCode].userList.push(user);
-
-    io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState)
-
-
-
-    printConsoleLogs(userName, socket.id, roomCode);
   });
 
   socket.on('create-room', async (userName) => {
-    const user ={
-      userName, 
+    const user = {
+      userName,
       id: socket.id,
-    }
-    users.push(user);
+    };
+
+    // Check for existing room code before creating
     const roomCode = await generateRoomCode();
-    rooms[roomCode] = { users: 1, createdAt: Date.now(), userList: [], gameState: 'lobby', messages: []};
+    while (rooms[roomCode]) {
+      roomCode = await generateRoomCode(); // Keep generating until unique code found
+    }
+
+    rooms[roomCode] = { users: 1, createdAt: Date.now(), userList: [], gameState: 'lobby', messages: [] };
+    users.push(user);
     socket.join(roomCode);
     rooms[roomCode].userList.push(user);
-    
-    io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState)
-
-
+    io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
     printConsoleLogs(userName, socket.id, roomCode);
   });
 }); 
