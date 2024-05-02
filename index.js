@@ -1,20 +1,8 @@
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 3000;
-const http = require('http'); // Use http server for Nginx reverse proxy
-var cors = require('cors')
-
+const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
-  handlePreflightRequest: (req, res) => {
-    console.log("Entered Preflight Request")
-    const headers = {
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Origin": req.headers.origin, 
-      "Access-Control-Allow-Credentials": true
-    };
-    res.writeHead(200, headers);
-    res.end();
-  }
+  cors: {origin: "*"}
 });
 
 let rooms = [];
@@ -104,9 +92,7 @@ async function generateRoomCode() {
   const data = await response.json(); 
   return data[0].toString();
 }
-
-const server = http.createServer(app); // Use http server
-
-server.listen(PORT, () => {
-  console.log(`server listening on port ${PORT} (HTTP) good luck austin :)))))))))`);
+// Start the server
+http.listen(3000, () => {
+  console.log('Server listening on port 3000');
 });
