@@ -18,6 +18,7 @@ io.on('connection', (socket) => {
     if (rooms[roomCode] && rooms[roomCode].gameState !== 'started') {
       rooms[roomCode].gameState = 'started';
       io.to(roomCode).emit('starting-game', rooms[roomCode].gameState);
+      io.emit('error', { message: '' });
     } else {
       io.emit('error', { message: 'Failed to start game: Invalid room or already started' });
       console.error("Failed to start game: Invalid room or already started");
@@ -30,6 +31,7 @@ io.on('connection', (socket) => {
       io.to(roomCode).emit('ending-game');
       rooms[roomCode].gameState = null;
       io.to(roomCode).emit('ending-game');
+      io.emit('error', { message: '' });
     } else {
       io.emit('error', { message: 'Failed to end game: Invalid room' });
       console.error("Failed to end game: Invalid room");
@@ -47,6 +49,7 @@ io.on('connection', (socket) => {
       console.log("From: " + sender);
       rooms[roomCode].messages.push(message);
       io.to(roomCode).emit('message-update', rooms[roomCode].messages);
+      io.emit('error', { message: '' });
     } else {
       io.emit('error', { message: 'Failed to send message: Invalid room' });
       console.error("Failed to send message: Invalid room");
@@ -73,6 +76,7 @@ io.on('connection', (socket) => {
         rooms[roomCode].userList.push(user);
         io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
         printConsoleLogs(userName, socket.id, roomCode);
+        io.emit('error', { message: '' });
       }
     } else {
       io.emit('error', { message: 'Failed to join room: Invalid room code or username' });
@@ -104,6 +108,7 @@ io.on('connection', (socket) => {
     socket.join(roomCode);
     rooms[roomCode].userList.push(user);
     io.to(roomCode).emit('successful-join', roomCode, user.userName, rooms[roomCode].users, rooms[roomCode].userList, rooms[roomCode].gameState);
+    io.emit('error', { message: '' });
     printConsoleLogs(userName, socket.id, roomCode);
   });
 }); 
